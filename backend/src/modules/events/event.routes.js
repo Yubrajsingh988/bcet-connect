@@ -1,10 +1,12 @@
 // backend/src/modules/events/event.routes.js
+const express = require("express");
+const router = express.Router();
 
-const router = require("express").Router();
 const controller = require("./event.controller");
 const auth = require("../../middleware/authMiddleware");
 const role = require("../../middleware/roleMiddleware");
 const validate = require("../../middleware/validateRequest");
+const uploadMW = require("../../middleware/uploadMiddleware");
 
 const {
   createEventSchema,
@@ -14,25 +16,50 @@ const {
   cancelEventSchema,
 } = require("./event.validation");
 
-// ---------------- CREATE EVENT (Alumni / Faculty / Admin) ----------------
+/**
+ * NOTE about multipart/form-data & validation:
+ * - For routes that accept file uploads (banner), mount upload middleware BEFORE validation
+ *   so Joi can validate the text fields present in req.body (multer puts form fields into req.body).
+ */
+
+/**
+ * CREATE EVENT
+ * POST  /events
+ * Access: alumni, faculty, admin
+ * Accepts multipart/form-data (banner optional)
+ */
 router.post(
   "/",
   auth,
   role("alumni", "faculty", "admin"),
+  uploadMW.single("banner", "events"), // optional banner upload
   validate(createEventSchema),
   controller.createEvent
 );
 
-// ---------------- PUBLIC EVENTS (NO AUTH) ----------------
+/**
+ * PUBLIC EVENTS (no auth) — approved + upcoming
+ * GET /events/public
+ */
 router.get("/public", controller.getPublicEvents);
 
-// ---------------- APPROVED EVENTS (AUTH REQUIRED) ----------------
+/**
+ * GET EVENTS (approved) - auth protected listing (could be same as public)
+ * GET /events
+ */
 router.get("/", auth, controller.getEvents);
 
-// ---------------- EVENT DETAILS (AUTH REQUIRED) ----------------
+/**
+ * EVENT DETAILS
+ * GET /events/:id
+ */
 router.get("/:id", auth, controller.getEventDetails);
 
-// ---------------- REGISTER FOR EVENT (Student / Alumni / Faculty) ----------------
+/**
+ * REGISTER FOR EVENT
+ * POST /events/:id/register
+ * Access: student, alumni, faculty
+ */
 router.post(
   "/:id/register",
   auth,
@@ -41,7 +68,10 @@ router.post(
   controller.registerEvent
 );
 
-// ---------------- CANCEL EVENT (Creator / Admin) ----------------
+/**
+ * CANCEL EVENT (creator or admin)
+ * PATCH /events/:id/cancel
+ */
 router.patch(
   "/:id/cancel",
   auth,
@@ -50,16 +80,25 @@ router.patch(
   controller.cancelEvent
 );
 
-// ---------------- UPDATE EVENT (Creator Only: Alumni / Faculty) ----------------
+/**
+ * UPDATE EVENT
+ * PUT /events/:id
+ * Access: alumni, faculty (creator)
+ * Allow banner re-upload
+ */
 router.put(
   "/:id",
   auth,
   role("alumni", "faculty"),
+  uploadMW.single("banner", "events"), // optional banner update
   validate(updateEventSchema),
   controller.updateEvent
 );
 
-// ---------------- APPROVE EVENT (Admin Only) ----------------
+/**
+ * APPROVE EVENT (admin only)
+ * PATCH /events/:id/approve
+ */
 router.patch(
   "/:id/approve",
   auth,

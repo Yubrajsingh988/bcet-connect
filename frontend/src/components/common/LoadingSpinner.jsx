@@ -1,36 +1,69 @@
+// frontend/src/components/common/LoadingSpinner.jsx
+import React from "react";
 import { Loader2 } from "lucide-react";
 
-export default function LoadingSpinner() {
-  return (
-    <div className="fixed inset-0 h-screen w-screen flex flex-col items-center justify-center bg-white/90 dark:bg-gray-900/90 backdrop-blur-md z-50">
-      
-      {/* Main Spinner */}
+/**
+ * LoadingSpinner
+ *
+ * Props:
+ * - fullScreen (boolean) default true -> covers viewport with backdrop
+ * - message (string) optional helper text under spinner
+ * - size (number) spinner size in px (default 48)
+ *
+ * Usage examples:
+ * <LoadingSpinner />                // fullscreen overlay
+ * <LoadingSpinner fullScreen={false} message="Saving..." /> // inline
+ */
+export default function LoadingSpinner({
+  fullScreen = true,
+  message = "Loading, please wait…",
+  size = 48,
+}) {
+  const spinner = (
+    <div
+      role="status"
+      aria-live="polite"
+      className="flex flex-col items-center justify-center gap-4"
+    >
       <div className="relative">
-        <Loader2 
-          className="animate-spin text-primary drop-shadow-lg" 
-          size={48} 
+        <Loader2
+          size={size}
+          className="animate-spin text-emerald-600 dark:text-emerald-300"
+          aria-hidden="true"
         />
-        
-        {/* Pulse ring effect */}
-        <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
+        {/* soft ring for subtle effect */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 rounded-full"
+          style={{
+            boxShadow:
+              "0 6px 18px rgba(16,185,129,0.08), inset 0 1px 0 rgba(255,255,255,0.02)",
+          }}
+        />
       </div>
 
-      {/* Loading Text */}
-      <p className="mt-6 text-gray-700 dark:text-gray-300 font-medium text-lg animate-pulse">
-        Loading, please wait…
-      </p>
+      {message && (
+        <p className="text-sm text-gray-700 dark:text-gray-300">{message}</p>
+      )}
 
-      {/* Skeleton Bars */}
-      <div className="mt-8 w-80 space-y-3">
-        <div className="h-3 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 rounded-full animate-pulse" />
-        <div className="h-3 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 rounded-full animate-pulse delay-75" />
-        <div className="h-3 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 rounded-full animate-pulse delay-150" />
-      </div>
-
-      {/* Brand watermark */}
-      <p className="mt-12 text-xs text-gray-400 dark:text-gray-600 tracking-wider">
-        BCET CONNECT
-      </p>
+      {/* simple skeleton lines to indicate background progress */}
+      {fullScreen && (
+        <div className="mt-4 w-56 space-y-2">
+          <div className="h-2 rounded-full bg-gray-200 dark:bg-gray-800 animate-pulse" />
+          <div className="h-2 rounded-full bg-gray-200 dark:bg-gray-800 animate-pulse" />
+          <div className="h-2 rounded-full bg-gray-200 dark:bg-gray-800 animate-pulse" />
+        </div>
+      )}
     </div>
   );
+
+  if (fullScreen) {
+    return (
+      <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm">
+        {spinner}
+      </div>
+    );
+  }
+
+  return <div className="inline-flex items-center justify-center">{spinner}</div>;
 }

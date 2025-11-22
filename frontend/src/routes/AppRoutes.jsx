@@ -1,257 +1,190 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+// frontend/src/routes/AppRoutes.jsx
+import React, { Suspense, lazy } from "react";
+import { Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
+import ProtectedRoute from "@/components/common/ProtectedRoute";
+import LoadingSpinner from "@/components/common/LoadingSpinner";
+import NotFound from "@/components/common/NotFound";
 
-// AUTH
-import LoginPage from "../modules/auth/pages/LoginPage";
-import RegisterPage from "../modules/auth/pages/RegisterPage";
+// --------- Lazy load pages (code-splitting) ---------
+// Auth
+const LoginPage = lazy(() => import("../modules/auth/pages/LoginPage"));
+const RegisterPage = lazy(() => import("../modules/auth/pages/RegisterPage"));
 
-// PROFILE
-import MyProfilePage from "../modules/profile/pages/MyProfilePage";
-import PublicProfilePage from "../modules/profile/pages/PublicProfilePage";
+// Profile
+const MyProfilePage = lazy(() => import("../modules/profile/pages/MyProfilePage"));
+const PublicProfilePage = lazy(() => import("../modules/profile/pages/PublicProfilePage"));
 
-// FEED
-import FeedPage from "../modules/feed/pages/FeedPage";
+// Feed
+const FeedPage = lazy(() => import("../modules/feed/pages/FeedPage"));
 
-// JOBS
-import JobsListPage from "../modules/jobs/pages/JobsListPage";
-import JobDetailPage from "../modules/jobs/pages/JobDetailPage";
-import JobCreatePage from "../modules/jobs/pages/JobCreatePage";
+// Jobs
+const JobsListPage = lazy(() => import("../modules/jobs/pages/JobsListPage"));
+const JobDetailPage = lazy(() => import("../modules/jobs/pages/JobDetailPage"));
+const JobCreatePage = lazy(() => import("../modules/jobs/pages/JobCreatePage"));
 
-// EVENTS
-import EventsListPage from "../modules/events/pages/EventsListPage";
-import EventDetailPage from "../modules/events/pages/EventDetailPage";
-import EventCreatePage from "../modules/events/pages/EventCreatePage";
+// Events
+const EventsListPage = lazy(() => import("../modules/events/pages/EventsListPage"));
+const EventDetailPage = lazy(() => import("../modules/events/pages/EventDetailPage"));
+const EventCreatePage = lazy(() => import("../modules/events/pages/EventCreatePage"));
 
-// COMMUNITIES
-import CommunitiesListPage from "../modules/communities/pages/CommunitiesListPage";
-import CommunityDetailPage from "../modules/communities/pages/CommunityDetailPage";
-import CommunityCreatePage from "../modules/communities/pages/CommunityCreatePage";
+// Communities
+const CommunitiesListPage = lazy(() => import("../modules/communities/pages/CommunitiesListPage"));
+const CommunityDetailPage = lazy(() => import("../modules/communities/pages/CommunityDetailPage"));
+const CommunityCreatePage = lazy(() => import("../modules/communities/pages/CommunityCreatePage"));
 
-// MENTORSHIP
-import MentorsPage from "../modules/mentorship/pages/MentorsPage";
-import MentorshipChatPage from "../modules/mentorship/pages/MentorshipChatPage";
+// Mentorship
+const MentorsPage = lazy(() => import("../modules/mentorship/pages/MentorsPage"));
+const MentorshipChatPage = lazy(() => import("../modules/mentorship/pages/MentorshipChatPage"));
 
-import LearningHubPage from "../modules/learning/pages/LearningHubPage";
+// Learning
+const LearningHubPage = lazy(() => import("../modules/learning/pages/LearningHubPage"));
 
+// Layouts
+const DashboardLayout = lazy(() => import("../layouts/DashboardLayout"));
+const AuthLayout = lazy(() => import("../layouts/AuthLayout"));
 
-// LAYOUTS & AUTH
-import ProtectedRoute from "../components/common/ProtectedRoute";
-import DashboardLayout from "../layouts/DashboardLayout";
+/**
+ * AuthGuard
+ * - If user is already authenticated, redirect away from auth pages to /feed.
+ * - Otherwise render children (auth pages).
+ */
+function AuthGuard({ children }) {
+  const { token, loading } = useAuth();
+
+  if (loading) return <LoadingSpinner />;
+
+  if (token) {
+    // already logged in → go to feed
+    return <Navigate to="/feed" replace />;
+  }
+
+  return children;
+}
+
+/**
+ * ProtectedLayout
+ * - Wraps the app's protected routes: injects ProtectedRoute + DashboardLayout once.
+ * - Nested routes render within <Outlet /> inside DashboardLayout.
+ */
+function ProtectedLayout() {
+  return (
+    <ProtectedRoute>
+      <Suspense fallback={<LoadingSpinner />}>
+        <DashboardLayout>
+          <Outlet />
+        </DashboardLayout>
+      </Suspense>
+    </ProtectedRoute>
+  );
+}
 
 export default function AppRoutes() {
   return (
-    <Routes>
+    <Suspense fallback={<LoadingSpinner />}>
+      <Routes>
+        {/* ---------------- Public / Auth (mounted under /auth) ---------------- */}
+        <Route
+          path="/auth"
+          element={
+            <Suspense fallback={<LoadingSpinner />}>
+              <AuthGuard>
+                <AuthLayout>
+                  <Outlet />
+                </AuthLayout>
+              </AuthGuard>
+            </Suspense>
+          }
+        >
+          <Route path="login" element={<LoginPage />} />
+          <Route path="register" element={<RegisterPage />} />
+          <Route index element={<Navigate to="login" replace />} />
+        </Route>
 
-      {/* ================= PUBLIC AUTH ROUTES ================= */}
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
+        {/* Keep legacy shortcuts for /login and /register (handy for old links) */}
+        <Route
+          path="/login"
+          element={
+            <Suspense fallback={<LoadingSpinner />}>
+              <AuthGuard>
+                <LoginPage />
+              </AuthGuard>
+            </Suspense>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <Suspense fallback={<LoadingSpinner />}>
+              <AuthGuard>
+                <RegisterPage />
+              </AuthGuard>
+            </Suspense>
+          }
+        />
 
-      {/* DEFAULT → FEED */}
-      <Route path="/" element={<Navigate to="/feed" replace />} />
+        {/* ---------------- Protected App (Dashboard) ---------------- */}
+        <Route element={<ProtectedLayout />}>
+          {/* redirect root of protected area to feed */}
+          <Route index element={<Navigate to="feed" replace />} />
 
+          {/* FEED */}
+          <Route path="feed" element={<FeedPage />} />
 
-      {/* ================= PROTECTED CORE APP ROUTES ================= */}
+          {/* PROFILE */}
+          <Route path="profile" element={<MyProfilePage />} />
+          <Route path="profile/:userId" element={<PublicProfilePage />} />
 
-      {/* 🌍 FEED */}
-      <Route
-        path="/feed"
-        element={
-          <ProtectedRoute>
-            <DashboardLayout>
-              <FeedPage />
-            </DashboardLayout>
-          </ProtectedRoute>
-        }
-      />
+          {/* JOBS */}
+          <Route path="jobs" element={<JobsListPage />} />
+          <Route path="jobs/create" element={<JobCreatePage />} />
+          <Route path="jobs/:id" element={<JobDetailPage />} />
 
+          {/* EVENTS */}
+          <Route path="events" element={<EventsListPage />} />
+          <Route path="events/create" element={<EventCreatePage />} />
+          <Route path="events/:id" element={<EventDetailPage />} />
 
-      {/* ================= PROFILE ROUTES ================= */}
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <DashboardLayout>
-              <MyProfilePage />
-            </DashboardLayout>
-          </ProtectedRoute>
-        }
-      />
+          {/* COMMUNITIES */}
+          <Route path="communities" element={<CommunitiesListPage />} />
+          <Route path="communities/create" element={<CommunityCreatePage />} />
+          <Route path="communities/:id" element={<CommunityDetailPage />} />
 
-      <Route
-        path="/profile/:userId"
-        element={
-          <ProtectedRoute>
-            <DashboardLayout>
-              <PublicProfilePage />
-            </DashboardLayout>
-          </ProtectedRoute>
-        }
-      />
+          {/* MENTORSHIP */}
+          <Route path="mentors" element={<MentorsPage />} />
+          <Route path="mentors/chat/:id" element={<MentorshipChatPage />} />
 
+          {/* LEARNING */}
+          <Route path="learning" element={<LearningHubPage />} />
 
-      {/* ================= JOBS MODULE ROUTES ================= */}
-      <Route
-        path="/jobs"
-        element={
-          <ProtectedRoute>
-            <DashboardLayout>
-              <JobsListPage />
-            </DashboardLayout>
-          </ProtectedRoute>
-        }
-      />
+          {/* ---------------- Admin example (showing roles via ProtectedRoute) ---------------- */}
+          <Route
+            path="admin/*"
+            element={
+              <ProtectedRoute roles={["admin", "superadmin"]}>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <DashboardLayout>
+                    <Outlet />
+                  </DashboardLayout>
+                </Suspense>
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<div className="p-6">Admin Home (build pages under /modules/admin)</div>} />
+            {/* add admin child routes here or lazy-load an AdminRoutes file */}
+          </Route>
 
-      <Route
-        path="/jobs/:id"
-        element={
-          <ProtectedRoute>
-            <DashboardLayout>
-              <JobDetailPage />
-            </DashboardLayout>
-          </ProtectedRoute>
-        }
-      />
+          {/* Optional dashboard overview */}
+          <Route path="dashboard" element={<div className="p-6 text-2xl font-semibold">Dashboard Overview (WIP)</div>} />
+        </Route>
 
-      <Route
-        path="/jobs/create"
-        element={
-          <ProtectedRoute>
-            <DashboardLayout>
-              <JobCreatePage />
-            </DashboardLayout>
-          </ProtectedRoute>
-        }
-      />
+        {/* ---------------- Root & redirects ---------------- */}
+        {/* If user hits bare root outside protected layout, redirect to feed */}
+        <Route path="/" element={<Navigate to="/feed" replace />} />
 
-
-      {/* ================= EVENTS MODULE ROUTES ================= */}
-      <Route
-        path="/events"
-        element={
-          <ProtectedRoute>
-            <DashboardLayout>
-              <EventsListPage />
-            </DashboardLayout>
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/events/:id"
-        element={
-          <ProtectedRoute>
-            <DashboardLayout>
-              <EventDetailPage />
-            </DashboardLayout>
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/events/create"
-        element={
-          <ProtectedRoute>
-            <DashboardLayout>
-              <EventCreatePage />
-            </DashboardLayout>
-          </ProtectedRoute>
-        }
-      />
-
-
-      {/* ================= COMMUNITIES MODULE ROUTES ================= */}
-      <Route
-        path="/communities"
-        element={
-          <ProtectedRoute>
-            <DashboardLayout>
-              <CommunitiesListPage />
-            </DashboardLayout>
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/communities/:id"
-        element={
-          <ProtectedRoute>
-            <DashboardLayout>
-              <CommunityDetailPage />
-            </DashboardLayout>
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/communities/create"
-        element={
-          <ProtectedRoute>
-            <DashboardLayout>
-              <CommunityCreatePage />
-            </DashboardLayout>
-          </ProtectedRoute>
-        }
-      />
-
-
-      {/* ================= MENTORSHIP MODULE ROUTES ================= */}
-      <Route
-        path="/mentors"
-        element={
-          <ProtectedRoute>
-            <DashboardLayout>
-              <MentorsPage />
-            </DashboardLayout>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* CHAT WITH MENTOR */}
-      <Route
-        path="/mentors/chat/:id"
-        element={
-          <ProtectedRoute>
-            <DashboardLayout>
-              <MentorshipChatPage />
-            </DashboardLayout>
-          </ProtectedRoute>
-        }
-      />
-
-
-      {/* ================= OPTIONAL DASHBOARD PAGE ================= */}
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <DashboardLayout>
-              <h1 className="text-2xl font-bold">Dashboard Overview</h1>
-            </DashboardLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/learning"
-        element={
-          <ProtectedRoute>
-            <DashboardLayout>
-              <LearningHubPage />
-            </DashboardLayout>
-          </ProtectedRoute>
-        }
-      />
-
-
-
-      {/* ================= 404 ROUTE ================= */}
-      <Route
-        path="*"
-        element={
-          <h1 className="p-6 text-center text-xl font-bold">
-            404 | Page Not Found
-          </h1>
-        }
-      />
-
-    </Routes>
+        {/* 404 Not Found */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
   );
 }

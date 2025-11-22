@@ -1,17 +1,98 @@
 // frontend/src/services/notificationService.js
+// Upgraded notification API wrapper
+// - returns res.data (so callers get payload directly)
+// - supports AbortController via options.signal
+// - consistent param handling and small helpers for pagination
+
 import api from "./apiClient"; // your axios instance
 
-export const fetchNotifications = (page = 1, limit = 20) =>
-  api.get(`/notifications?page=${page}&limit=${limit}`);
+// Helper to unwrap axios and return data or throw normalized error
+async function unwrap(promise) {
+  try {
+    const res = await promise;
+    return res.data;
+  } catch (err) {
+    // normalize axios error shape, preserve original for debugging
+    if (err.response) {
+      const { status, data } = err.response;
+      const message = (data && (data.message || data.error)) || data || err.message;
+      const e = new Error(message);
+      e.status = status;
+      e.response = data;
+      throw e;
+    }
+    throw err;
+  }
+}
 
-export const fetchUnreadCount = () =>
-  api.get("/notifications/unread-count");
+/**
+ * fetchNotifications
+ * @param {Object} opts - { page=1, limit=20, skip, signal }
+ *   - supports page/limit or skip/limit depending on your backend
+ * @returns {Promise<Object>} - API payload (expected: { success: true, data: { total, items } })
+ */
+export const fetchNotifications = (opts = {}) => {
+  const {
+    page = 1,
+    limit = 20,
+    skip = undefined,
+    signal = undefined,
+    extraParams = {}
+  } = opts;
 
+  // prefer page/limit if provided; otherwise allow skip & limit
+  const params = { page, limit, ...extraParams };
+  if (typeof skip !== "undefined") {
+    // some APIs use skip instead of page
+    delete params.page;
+    params.skip = skip;
+  }
+
+  return unwrap(api.get("/notifications", { params, signal }));
+};
+
+/**
+ * fetchUnreadCount
+ * returns: { success: true, data: { unreadCount: number } }
+ */
+export const fetchUnreadCount = ({ signal } = {}) =>
+  unwrap(api.get("/notifications/unread-count", { signal }));
+
+/**
+ * markNotificationRead
+ * @param {string} id
+ * returns updated notification object in res.data
+ */
 export const markNotificationRead = (id) =>
-  api.post(`/notifications/${id}/mark-read`);
+  unwrap(api.post(`/notifications/${id}/mark-read`));
 
+/**
+ * markAllRead
+ * returns success message
+ */
 export const markAllRead = () =>
-  api.post("/notifications/mark-all-read");
+  unwrap(api.post("/notifications/mark-all-read"));
 
+/**
+ * deleteNotification
+ * @param {string} id
+ */
 export const deleteNotification = (id) =>
-  api.delete(`/notifications/${id}`);
+  unwrap(api.delete(`/notifications/${id}`));
+
+/**
+ * createNotification (optional helper, used if frontend triggers server-side notification creation)
+ * - Usually notifications are created server-side; include helper for admin/test use.
+ * @param {Object} payload - { userId, actorId, title, message, type, data }
+ */
+export const createNotification = (payload) =>
+  unwrap(api.post("/notifications", payload));
+
+export default {
+  fetchNotifications,
+  fetchUnreadCount,
+  markNotificationRead,
+  markAllRead,
+  deleteNotification,
+  createNotification,
+};

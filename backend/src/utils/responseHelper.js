@@ -1,3 +1,5 @@
+// backend/src/utils/resposeHelper.js
+
 exports.success = (res, data, message = "Success") => {
   return res.json({ success: true, message, data });
 };

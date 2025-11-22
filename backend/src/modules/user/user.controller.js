@@ -1,59 +1,171 @@
-// backend/src/modules/user/user.controller.js
 const userService = require("./user.service");
+const ApiError = require("../../utils/ApiError");
+const ApiResponse = require("../../utils/ApiResponse");
+const { deleteByPublicId } = require("../../utils/cloudinary.helper");
 
-// GET /api/user/me  → current logged in user ka profile
+/* ──────────────────────────────────────────────
+   AUTH GUARD (single responsibility)
+─────────────────────────────────────────────── */
+const requireAuth = (req) => {
+  if (!req.user || !req.user.id) {
+    throw new ApiError(401, "Not authenticated");
+  }
+  return req.user.id;
+};
+
+/* ──────────────────────────────────────────────
+   GET MY PROFILE
+   - Returns FULL profile
+   - Includes virtuals (profileCompleteness)
+   - Single source of truth for frontend
+─────────────────────────────────────────────── */
 exports.getMyProfile = async (req, res, next) => {
   try {
-    const user = await userService.getProfileById(req.user.id);
+    const userId = requireAuth(req);
+
+    const user = await userService.getProfileById(userId);
 
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
+      throw new ApiError(404, "User not found");
     }
 
-    res.json({
-      success: true,
-      data: user,
-    });
-  } catch (error) {
-    next(error);
+    // IMPORTANT: userService already returns lean + virtuals
+    return ApiResponse.success(
+      res,
+      200,
+      "Profile fetched successfully",
+      user
+    );
+  } catch (err) {
+    next(err);
   }
 };
 
-// PUT /api/user/me  → update current user profile
+/* ──────────────────────────────────────────────
+   UPDATE MY PROFILE
+   - Handles bio, headline, skills, education,
+     experience, social, batch, department
+   - Partial updates allowed
+   - Validation handled in service
+─────────────────────────────────────────────── */
 exports.updateMyProfile = async (req, res, next) => {
   try {
-    const updated = await userService.updateProfile(req.user.id, req.body);
+    const userId = requireAuth(req);
+    const payload = req.body || {};
 
-    res.json({
-      success: true,
-      message: "Profile updated successfully",
-      data: updated,
-    });
-  } catch (error) {
-    next(error);
+    const updated = await userService.updateProfile(userId, payload);
+
+    return ApiResponse.success(
+      res,
+      200,
+      "Profile updated successfully",
+      updated
+    );
+  } catch (err) {
+    next(err);
   }
 };
 
-// GET /api/user/:id  → kisi bhi user ka public profile
+/* ──────────────────────────────────────────────
+   GET PUBLIC PROFILE
+   - Read-only
+   - Limited projection (no private data)
+─────────────────────────────────────────────── */
 exports.getPublicProfile = async (req, res, next) => {
   try {
-    const user = await userService.getPublicProfile(req.params.id);
+    const { id } = req.params;
 
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
+    if (!id) {
+      throw new ApiError(400, "User id is required");
     }
 
-    res.json({
-      success: true,
-      data: user,
+    const user = await userService.getPublicProfile(id);
+
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    return ApiResponse.success(
+      res,
+      200,
+      "Public profile fetched successfully",
+      user
+    );
+  } catch (err) {
+    next(err);
+  }
+};
+
+/* ──────────────────────────────────────────────
+   UPLOAD AVATAR
+   - Cloudinary
+   - Deletes old avatar safely
+   - Updates profile + recalculates completeness
+─────────────────────────────────────────────── */
+exports.uploadAvatar = async (req, res, next) => {
+  try {
+    const userId = requireAuth(req);
+
+    if (!req.file?.cloudinary?.url) {
+      throw new ApiError(400, "Avatar upload failed");
+    }
+
+    const { url, public_id } = req.file.cloudinary;
+
+    // cleanup old avatar (best-effort)
+    try {
+      const current = await userService.getProfileById(userId);
+      if (
+        current?.avatarPublicId &&
+        current.avatarPublicId !== public_id
+      ) {
+        deleteByPublicId(current.avatarPublicId).catch(() => {});
+      }
+    } catch (_) {}
+
+    const updated = await userService.updateProfile(userId, {
+      avatar: url,
+      avatarPublicId: public_id,
     });
-  } catch (error) {
-    next(error);
+
+    return ApiResponse.success(
+      res,
+      200,
+      "Avatar updated successfully",
+      updated
+    );
+  } catch (err) {
+    next(err);
+  }
+};
+
+/* ──────────────────────────────────────────────
+   UPLOAD RESUME
+   - PDF / DOC
+   - Updates profile + completeness
+─────────────────────────────────────────────── */
+exports.uploadResume = async (req, res, next) => {
+  try {
+    const userId = requireAuth(req);
+
+    if (!req.file?.cloudinary?.url) {
+      throw new ApiError(400, "Resume upload failed");
+    }
+
+    const { url, public_id } = req.file.cloudinary;
+
+    const updated = await userService.updateProfile(userId, {
+      resume: url,
+      resumePublicId: public_id,
+    });
+
+    return ApiResponse.success(
+      res,
+      200,
+      "Resume uploaded successfully",
+      updated
+    );
+  } catch (err) {
+    next(err);
   }
 };
