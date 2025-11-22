@@ -6,25 +6,44 @@ import FeedFilters from "../components/FeedFilters";
 
 export default function FeedPage() {
   const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const loadFeed = () => {
-    api.get("/feed").then((res) => {
-      setPosts(res.data.data);
-    });
+  const loadFeed = async (filter) => {
+    setLoading(true);
+    const res = await api.get("/feed", { params: { filter } });
+    setPosts(res.data.data || []);
+    setLoading(false);
   };
 
   useEffect(() => {
-    loadFeed();
+    loadFeed("all");
   }, []);
 
   return (
-    <div className="max-w-2xl mx-auto mt-5 space-y-6">
-      <CreatePostBox onPostCreated={loadFeed} />
+    <div className="max-w-3xl mx-auto mt-6 space-y-8 px-3 lg:px-0">
+      
+      {/* CREATE POST CARD */}
+      <CreatePostBox onPostCreated={() => loadFeed("all")} />
 
-      <FeedFilters onFilter={(type) => loadFeed(type)} />
+      {/* FILTER BAR */}
+      <FeedFilters onFilter={loadFeed} />
+
+      {/* LOADING STATE */}
+      {loading && (
+        <div className="text-center text-gray-500 py-10">
+          Loading feed...
+        </div>
+      )}
+
+      {/* FEED POSTS */}
+      {!loading && posts.length === 0 && (
+        <p className="text-center text-gray-500 py-10">
+          No posts yet. Be the first to post!
+        </p>
+      )}
 
       {posts.map((post) => (
-        <PostCard key={post._id} post={post} onDelete={loadFeed} />
+        <PostCard key={post._id} post={post} onDelete={() => loadFeed("all")} />
       ))}
     </div>
   );

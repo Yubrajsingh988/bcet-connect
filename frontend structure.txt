@@ -1,24 +1,68 @@
 frontend/
   package.json
-  vite.config.js           # agar Vite use kar rahe ho
+  vite.config.js
   index.html
+  tailwind.config.js
+  postcss.config.js
+
   src/
     main.jsx
     App.jsx
 
+    assets/                       # images, icons, logos, svg, fonts
+      logos/
+      icons/
+      illustrations/
+      avatars/
+
+    styles/                       # global styles
+      globals.css
+      shadcn.css
+      theme.css
+
     routes/
       AppRoutes.jsx
+      ProtectedRoutes.jsx
+      RoleRoutes.jsx
 
     layouts/
       DashboardLayout.jsx
       AuthLayout.jsx
+      MinimalLayout.jsx           # for landing pages
 
     context/
       AuthContext.jsx
+      ThemeContext.jsx            # dark/light mode
+      UIContext.jsx               # sidebar toggle, modal state
 
+    hooks/
+      useAuth.js
+      useAxios.js
+      useDebounce.js
+      useUserRole.js
+      useNotifications.js
+      useChat.js                  # mentorship chat
+  
     utils/
       roleConfig.js
       constants.js
+      helper.js
+      formatDate.js
+      uploadHelper.js
+      axiosErrorHandler.js
+
+    services/
+      apiClient.js
+      authService.js
+      userService.js
+      jobService.js
+      eventService.js
+      communityService.js
+      mentorshipService.js
+      learningService.js
+      donationService.js
+      analyticsService.js
+      aiService.js                # AI endpoints
 
     components/
       common/
@@ -26,22 +70,43 @@ frontend/
         LoadingSpinner.jsx
         NotFound.jsx
         AccessDenied.jsx
+        EmptyState.jsx
+        ErrorBoundary.jsx
+        Pagination.jsx
+        SkeletonCard.jsx
+
       layout/
         Sidebar.jsx
         TopNavbar.jsx
         RightSidebar.jsx
-
-    services/
-      apiClient.js
-      authService.js
+        MobileSidebar.jsx
+        NotificationsPanel.jsx
+        UserMenu.jsx
+        SearchBar.jsx
+ 
+      ui/                         # ShadCN components (customized)
+        Button.jsx
+        Card.jsx
+        Modal.jsx
+        Input.jsx
+        Avatar.jsx
+        Tabs.jsx
+        Dropdown.jsx
+        Toast.jsx
+        Badge.jsx
+        Skeleton.jsx
 
     modules/
       auth/
         pages/
           LoginPage.jsx
           RegisterPage.jsx
+          ForgotPasswordPage.jsx
+          VerifyEmailPage.jsx
         components/
           AuthForm.jsx
+          OTPInput.jsx
+
       feed/
         pages/
           FeedPage.jsx
@@ -49,6 +114,9 @@ frontend/
           CreatePostBox.jsx
           PostCard.jsx
           FeedFilters.jsx
+          MediaPreview.jsx
+          Comments.jsx
+
       jobs/
         pages/
           JobsListPage.jsx
@@ -58,6 +126,8 @@ frontend/
           JobCard.jsx
           JobFilters.jsx
           JobMatchWidget.jsx
+          ApplicantList.jsx
+
       mentorship/
         pages/
           MentorsPage.jsx
@@ -66,6 +136,8 @@ frontend/
           MentorCard.jsx
           MentorFilters.jsx
           ChatWindow.jsx
+          ChatSidebar.jsx
+
       events/
         pages/
           EventCreatePage.jsx
@@ -74,6 +146,8 @@ frontend/
         components/
           EventCard.jsx
           UpcomingEventsWidget.jsx
+          EventBanner.jsx
+
       communities/
         pages/
           CommunitiesListPage.jsx
@@ -83,6 +157,8 @@ frontend/
           ChannelSidebar.jsx
           CommunityFeed.jsx
           CommunityMembers.jsx
+          CommunityPostCard.jsx
+
       learning/
         pages/
           LearningHubPage.jsx
@@ -90,12 +166,16 @@ frontend/
           SkillCard.jsx
           LearningPathWidget.jsx
           ResourceCard.jsx
+          AIRecommendationCard.jsx
+
       directory/
         pages/
           DirectoryPage.jsx
         components/
           UserCard.jsx
           DirectoryFilters.jsx
+          StatsBar.jsx
+
       profile/
         pages/
           MyProfilePage.jsx
@@ -104,6 +184,8 @@ frontend/
           ProfileHeader.jsx
           SkillsSection.jsx
           PortfolioGrid.jsx
+          ProfileSidebarTabs.jsx
+
       admin/
         pages/
           AdminDashboardPage.jsx
@@ -112,8 +194,27 @@ frontend/
           EventsManagementPage.jsx
           CommunitiesManagementPage.jsx
           AnalyticsPage.jsx
+          DonationsAnalyticsPage.jsx
         components/
           StatCard.jsx
           UsersTable.jsx
           ApprovalList.jsx
           AnalyticsCharts.jsx
+          RevenueChart.jsx
+          EngagementChart.jsx
+
+      donations/
+        pages/
+          DonationPage.jsx
+          DonationLeaderboard.jsx
+        components/
+          DonationCard.jsx
+          PaymentForm.jsx
+          DonorBadge.jsx
+
+      notifications/
+        components/
+          NotificationItem.jsx
+          NotificationList.jsx
+
+    app.config.js                 # global config

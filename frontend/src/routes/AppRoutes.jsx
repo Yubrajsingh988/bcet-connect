@@ -30,6 +30,9 @@ import CommunityCreatePage from "../modules/communities/pages/CommunityCreatePag
 import MentorsPage from "../modules/mentorship/pages/MentorsPage";
 import MentorshipChatPage from "../modules/mentorship/pages/MentorshipChatPage";
 
+import LearningHubPage from "../modules/learning/pages/LearningHubPage";
+
+
 // LAYOUTS & AUTH
 import ProtectedRoute from "../components/common/ProtectedRoute";
 import DashboardLayout from "../layouts/DashboardLayout";
@@ -226,6 +229,17 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/learning"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <LearningHubPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
 
 
       {/* ================= 404 ROUTE ================= */}

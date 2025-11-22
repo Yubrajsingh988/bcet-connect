@@ -1,3 +1,5 @@
+// backend/src/modules/jobs/job.model.js
+
 const mongoose = require("mongoose");
 
 const applicantSchema = new mongoose.Schema(
@@ -7,18 +9,13 @@ const applicantSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    resume: {
-      type: String, // resume file URL (Cloudinary / etc.)
-    },
+    resume: String,
     status: {
       type: String,
       enum: ["applied", "shortlisted", "rejected", "hired"],
       default: "applied",
     },
-    appliedAt: {
-      type: Date,
-      default: Date.now,
-    },
+    appliedAt: { type: Date, default: Date.now },
   },
   { _id: false }
 );
@@ -27,11 +24,17 @@ const jobSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
     company: { type: String, required: true },
+
+    companyLogo: {
+      type: String,
+      default: "https://via.placeholder.com/100x100?text=Logo",
+    },
+
     location: { type: String, required: true },
 
     employmentType: {
       type: String,
-      enum: ["Full-Time", "Internship", "Part-Time", "Remote"],
+      enum: ["Full-Time", "Internship", "Part-Time", "Contract", "Freelance"],
       default: "Full-Time",
     },
 
@@ -39,6 +42,17 @@ const jobSchema = new mongoose.Schema(
       type: String,
       enum: ["Onsite", "Remote", "Hybrid"],
       default: "Onsite",
+    },
+
+    experienceLevel: {
+      type: String,
+      enum: ["Entry", "Mid", "Senior", "Lead"],
+      default: "Entry",
+    },
+
+    category: {
+      type: String,
+      default: "General",
     },
 
     description: { type: String, required: true },
@@ -49,14 +63,17 @@ const jobSchema = new mongoose.Schema(
     },
 
     salaryRange: {
-      min: { type: Number },
-      max: { type: Number },
+      min: { type: Number, default: 0 },
+      max: { type: Number, default: 0 },
       currency: { type: String, default: "INR" },
     },
 
-    deadline: {
-      type: Date,
+    applyLink: {
+      type: String,
+      default: "",
     },
+
+    deadline: Date,
 
     postedBy: {
       type: mongoose.Schema.Types.ObjectId,
@@ -69,9 +86,10 @@ const jobSchema = new mongoose.Schema(
       default: [],
     },
 
+    // 🔥 FIXED FIELD NAME
     isApproved: {
       type: Boolean,
-      default: true, // later admin approval system me false rakh sakte ho
+      default: true, // change back to false when admin panel ready
     },
   },
   { timestamps: true }

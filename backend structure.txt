@@ -1,6 +1,8 @@
 backend/
   package.json
   .env
+  README.md
+
   src/
     server.js
     app.js
@@ -8,77 +10,158 @@ backend/
     config/
       env.js
       db.js
+      cloudinary.js           # image upload
+      aws.js                  # s3 / lambda config
+      redis.js                # caching (optional)
+      elastic.js              # future search engine
+      logger.js               # winston logger config
 
     constants/
       roles.js
+      permissions.js          # mapping roles → actions
+      events.js               # system events
 
     middleware/
       authMiddleware.js
       roleMiddleware.js
       errorHandler.js
       validateRequest.js
+      uploadMiddleware.js     # multer for image upload
+      rateLimiter.js          # security
 
     utils/
       ApiError.js
+      ApiResponse.js
       catchAsync.js
+      sendEmail.js            # Gmail / SMTP
+      sendSMS.js              # MSG91 / Twilio
+      pagination.js
+      cloudUpload.js
       logger.js
-      responseHelper.js
+      generateReceipt.js
+
+    services/
+      notification.service.js # central notification handler
+      search.service.js       # elastic search integration
+      payment.service.js      # Razorpay / PhonePe
+      ai.engine.js            # AI/ML processing engine
 
     modules/
       auth/
+        auth.model.js         # (optional)
         auth.controller.js
-        auth.routes.js
         auth.service.js
+        auth.routes.js
         auth.validation.js
+
       user/
         user.model.js
         user.controller.js
         user.service.js
         user.routes.js
+        user.validation.js
+
       feed/
         feed.model.js
         feed.controller.js
         feed.service.js
         feed.routes.js
         feed.validation.js
+
       jobs/
         job.model.js
         job.controller.js
         job.service.js
         job.routes.js
         job.validation.js
+        job.recommendation.js  # AI matching logic
+
       mentorship/
         mentorship.model.js
         mentorship.controller.js
         mentorship.service.js
         mentorship.routes.js
+        mentorship.validation.js
+        chat/
+          chat.model.js
+          chat.controller.js
+          chat.service.js
+          chat.routes.js
+
       events/
         event.model.js
         event.controller.js
         event.service.js
         event.routes.js
+        event.validation.js
+
       communities/
         community.model.js
         community.controller.js
         community.service.js
         community.routes.js
+        community.validation.js
+
       learning/
+        learning.model.js
         learning.controller.js
         learning.service.js
         learning.routes.js
+        learning.validation.js
+        ai/
+          resumeParser.js      # AI
+          skillExtractor.js    
+          learningPathAI.js
+
       donations/
         donation.model.js
         donation.controller.js
         donation.service.js
         donation.routes.js
+        donation.validation.js
+        donation.analytics.js  # admin-level stats
+
       analytics/
         analytics.controller.js
+        analytics.service.js
         analytics.routes.js
+
       ai/
         ai.controller.js
         ai.routes.js
+        ai.service.js
+        llm/
+          recommendationEngine.js
+          chatAssistant.js
+          skillGapAI.js
+
+      admin/
+        admin.controller.js
+        admin.routes.js
+        admin.service.js
+        approval/
+          jobApproval.js
+          eventApproval.js
+          communityApproval.js
+
+      notifications/
+        notification.model.js
+        notification.controller.js
+        notification.service.js
+        notification.routes.js
 
     routes/
       index.js
+      v1.js                    # versioning
+
+    sockets/
+      chat.socket.js           # mentorship chat
+      notifications.socket.js  # real-time notifications
+
+    tests/
+      auth.test.js
+      user.test.js
 
 
+alumni-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5MjFkNmQyN2MyYzhmMTFhZDM2YjJlOSIsInJvbGUiOiJhbHVtbmkiLCJpYXQiOjE3NjM4MzQwMDEsImV4cCI6MTc2NDQzODgwMX0.7w8Csx-Yms3OHOkBG_Zl9ucI3-G3RIoQJW7MIGDAQR8
+student-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5MWYyNmE1YzNjYjZhYmYxMjczODZhOCIsInJvbGUiOiJzdHVkZW50IiwiaWF0IjoxNzYzODMzMzc2LCJleHAiOjE3NjQ0MzgxNzZ9.1Z3hFHlRK-GeBHOADUBlK4FiwDV1N13fmRTtIPUruOM

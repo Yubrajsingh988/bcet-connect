@@ -11,6 +11,9 @@ router.use("/jobs", require("../modules/jobs/job.routes"));
 router.use("/events", require("../modules/events/event.routes"));
 router.use("/communities", require("../modules/communities/community.routes"));
 router.use("/mentorship", require("../modules/mentorship/mentorship.routes"));
-
+router.use("/learning", require("../modules/learning/learning.routes"));
+router.use("/admin", require("../modules/admin/admin.routes"));
+router.use("/analytics", require("../modules/analytics/analytics.routes"));
+router.use("/donations", require("../modules/donations/donation.routes"));
 
 module.exports = router;
